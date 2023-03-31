@@ -15,6 +15,7 @@ class ImageList(APIView):
         return Response(serializer.data)
     
     def post(self, request):
+        print(request.data)
         serializer = InbodyImageSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
@@ -33,3 +34,12 @@ class ResponseList(APIView):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+# class ResponseEdit(APIView):
+#     def get(self, request):
+#         responses = ChatGPTResponse.objects.all()
+#         for i in responses:
+#             response_list = i.response.split("},{")
+
+#         return 
+
