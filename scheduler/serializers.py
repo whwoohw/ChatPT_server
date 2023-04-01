@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import InbodyImage, ChatGPTResponse
+from .models import InbodyImage, ExerciseResponse, MealResponse
 
 class InbodyImageSerializer(serializers.ModelSerializer):
     class Meta:
@@ -7,7 +7,12 @@ class InbodyImageSerializer(serializers.ModelSerializer):
         fields = ('id', 'image')
 
 
-class ChatGPTResponseSerializer(serializers.ModelSerializer):
+class ExerciseResponseSerializer(serializers.ModelSerializer):
     class Meta:
-        model = ChatGPTResponse
+        model = ExerciseResponse
+        fields = ('id', 'response')
+
+class MealResponseSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = MealResponse
         fields = ('id', 'response')

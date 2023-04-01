@@ -1,7 +1,10 @@
 from django.urls import path
-from .views import ImageList, ResponseList
+from .views import ImageList, ExerciseResponseList, ExerciseResponseEdit, MealResponseList, MealResponseEdit
 
 urlpatterns = [
     path('image/', ImageList.as_view()),
-    path('result/', ResponseList.as_view())
+    path('result/exercise', ExerciseResponseList.as_view()),
+    path('result/exercise/edit', ExerciseResponseEdit.as_view()),
+    path('result/meal', MealResponseList.as_view()),
+    path('result/meal/edit', MealResponseEdit.as_view()),
 ]

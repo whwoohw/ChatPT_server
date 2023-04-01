@@ -4,5 +4,8 @@ from django.db import models
 class InbodyImage(models.Model):
     image= models.ImageField(upload_to="image")
 
-class ChatGPTResponse(models.Model):
+class ExerciseResponse(models.Model):
+    response= models.TextField()
+
+class MealResponse(models.Model):
     response= models.TextField()
