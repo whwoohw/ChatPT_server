@@ -4,15 +4,15 @@ from .models import InbodyImage, ExerciseResponse, MealResponse
 class InbodyImageSerializer(serializers.ModelSerializer):
     class Meta:
         model = InbodyImage
-        fields = ('id', 'image')
+        fields = "__all__"
 
 
 class ExerciseResponseSerializer(serializers.ModelSerializer):
     class Meta:
         model = ExerciseResponse
-        fields = ('id', 'response')
+        fields = "__all__"
 
 class MealResponseSerializer(serializers.ModelSerializer):
     class Meta:
         model = MealResponse
-        fields = ('id', 'response')
+        fields = "__all__"
