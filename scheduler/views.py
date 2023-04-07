@@ -10,6 +10,17 @@ from .models import InbodyImage, ExerciseResponse, MealResponse
 import json
 import openai
 import os
+import pytesseract
+from PIL import Image
+import environ
+from chatpt_server.settings import BASE_DIR
+
+
+env = environ.Env()
+environ.Env.read_env(
+    env_file=os.path.join(BASE_DIR, '.env')
+)
+
 
 
 class ImageList(APIView):
@@ -25,6 +36,24 @@ class ImageList(APIView):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
+class RunOCR(APIView):
+    def get(self, request, image_id):
+        image = InbodyImage.objects.get(id=image_id)
+        image_file = Image.open(image.image)
+        cropped_image = image_file.crop((720, 235, 800, 280))
+        pytesseract.pytesseract.tesseract_cmd = f"{env('tesseract')}"
+        try:
+            inbody_score = pytesseract.image_to_string(cropped_image)
+            image.result = inbody_score
+            image.save()
+            serializer = InbodyImageSerializer(image)
+        except Exception as e:
+            return Response({"error": f"{e}"}, status=status.HTTP_400_BAD_REQUEST)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+        
+
+
 class ExerciseResponseList(APIView):
     def get(self, request):
         responses = ExerciseResponse.objects.all()
@@ -67,28 +96,35 @@ class MealResponseEdit(APIView):
 
 class CreateResponse(APIView):
     def get(self, request):
+        sex = ""
+        state = "that of a strongman with very developed muscles"
+        purpose = "maintain my muscle, and lose weight"
+        place = "a gym"
+        body_component = "leg"
+        routine = "every Monday, Wednesday, Friday"
+        time = "a hour"
         openai.api_key=os.environ.get('OPENAI_API_KEY')
         completion = openai.ChatCompletion.create(
         model="gpt-3.5-turbo",
         messages=[
-            {"role": "user", "content": 
-            '''
-            운동을 시작한지는 2년 정도 되었고, 1rm은 현재 데드리프트 200kg, 벤치프레스 150kg, 스쿼트 180kg 이야.
-            운동은 항상 평일에만 하며, 40분 정도 운동해. 
-            나는 하체 근육을 키우는 운동 위주로 운동 루틴을 짜고 싶어.
-
-            운동은 평일(월, 화, 수, 목, 금) 에 맞게 설정해줘.
-            각 요일별로 짜줘
-
-            답변 형식은 아래와 같은 json 형태로 전달해줘.
-            예시는 다음과 같아
-
-            {"schedule": [
-            { "id": 1, "day": "월요일", "exercise": ["덤벨로우 3세트 3~5회", "바벨로우 5세트 3~4회"], "type": "상체" }, { "id": 2, "day": "화요일", "exercise": ["스쿼트 4세트 4~6회", "데드리프트 6세트 3~5회"], "type": "하체" }, ...],
-            "reason" : "균형있게 운동을 하기 위해서}
-
-            마지막에는 이렇게 운동 루틴을 짠 이유도 알려줘.
-            '''}
+            {"role": "user", "content":  
+             f"""I want you to recommend me of workout routine.
+              My sex is {sex}.
+              My current body state is {state}.
+              My purpose of exercising is to {purpose}.
+              I usually exercise in {place}.
+              My mainly concern area on my body while exercising is {body_component}.
+              I exercise {routine}.
+              I usually workout for {time}.
+              Now, make me the workout routine which contains exercise type name, how much repetition and time that I should take for a set, and how much weight that I need to lift.
+              The form of answer should be an JSON.
+              'KEYS FOR JSON': key values for each of items are day of the week, exercise type name, duration, repetition, weight. 
+              'BAD EXAMPLE' : This is an bad example that you have sent to me. 'duration': '3 sets of 10','repetitions': '10'. 
+              'VALUES FOR JSON 1' : You should take care of that the repetitions means the number of reps per a set and total number of set. And also that the duration is meant to be a total expected time for completing this exercise.
+              'VALUES FOR JSON 2' : You should recommend weight formatted as 'percentage% of 1RM'.
+              'VALUES FOR JSON 3' : You should recommend duration of the exercise formatted as 'minute'.
+              and give me the reason why you recommended this routine based on my current state that I mentioned.
+            """}
           ]
         )
         response = (completion.choices[0].message)
