@@ -23,7 +23,7 @@ environ.Env.read_env(
 
 
 
-class ImageList(APIView):
+class ImageListView(APIView):
     def get(self, request):
         images = InbodyImage.objects.all()
         serializer = InbodyImageSerializer(images, many=True)
@@ -54,47 +54,34 @@ class RunOCR(APIView):
         
 
 
-class ExerciseResponseList(APIView):
+class ExerciseResponseView(APIView):
     def get(self, request):
         responses = ExerciseResponse.objects.all()
         serializer = ExerciseResponseSerializer(responses, many=True)
         return Response(serializer.data)
     
-    def post(self, request):
-        serializer = ExerciseResponseSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-class ExerciseResponseEdit(APIView):
+class ExerciseResponseEditView(APIView):
     def get(self, request):
         responses = ExerciseResponse.objects.all()
         i = responses[0]
         response = json.loads(i.response)
         return Response(response)
 
-class MealResponseList(APIView):
+class MealResponseView(APIView):
     def get(self, request):
-        responses = MealResponse.objects.all()
+        responses = MealResponse.objects.get()
         serializer = MealResponseSerializer(responses, many=True)
         return Response(serializer.data)
-    
-    def post(self, request):
-        serializer = MealResponseSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-class MealResponseEdit(APIView):
+class MealResponseEditView(APIView):
     def get(self, request):
         responses = MealResponse.objects.all()
         i = responses[1]
         response = json.loads(i.response)
         return Response(response)
 
-class CreateResponse(APIView):
+class CreateResponseView(APIView):
     def get(self, request):
         sex = ""
         state = "that of a strongman with very developed muscles"
