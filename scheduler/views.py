@@ -12,6 +12,15 @@ import openai
 import os
 import pytesseract
 from PIL import Image
+import environ
+from chatpt_server.settings import BASE_DIR
+
+
+env = environ.Env()
+environ.Env.read_env(
+    env_file=os.path.join(BASE_DIR, '.env')
+)
+
 
 
 class ImageList(APIView):
@@ -32,7 +41,7 @@ class RunOCR(APIView):
         image = InbodyImage.objects.get(id=image_id)
         image_file = Image.open(image.image)
         cropped_image = image_file.crop((720, 235, 800, 280))
-        pytesseract.pytesseract.tesseract_cmd = '/opt/homebrew/bin/tesseract'
+        pytesseract.pytesseract.tesseract_cmd = f"{env('tesseract')}"
         try:
             inbody_score = pytesseract.image_to_string(cropped_image)
             image.result = inbody_score
