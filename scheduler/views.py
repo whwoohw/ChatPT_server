@@ -14,7 +14,7 @@ import pytesseract
 from PIL import Image
 import environ
 from chatpt_server.settings import BASE_DIR
-
+from .prompt import exercise_prompt, meal_prompt
 
 env = environ.Env()
 environ.Env.read_env(
@@ -25,16 +25,14 @@ environ.Env.read_env(
 
 class ImageList(APIView):
     def get(self, request):
-        images = InbodyImage.objects.all()
+        images = InbodyImage.objects.filter(user=request.user)
         serializer = InbodyImageSerializer(images, many=True)
         return Response(serializer.data)
     
     def post(self, request):
-        serializer = InbodyImageSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        image = InbodyImage.objects.create(user=request.user, image=request.data.get("image"))
+        serializer = InbodyImageSerializer(image)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
     
 class RunOCR(APIView):
     def get(self, request, image_id):
@@ -56,16 +54,12 @@ class RunOCR(APIView):
 
 class ExerciseResponseList(APIView):
     def get(self, request):
-        responses = ExerciseResponse.objects.all()
+        responses = ExerciseResponse.objects.filter(user=request.user)
         serializer = ExerciseResponseSerializer(responses, many=True)
+        i = responses[0]
+        response = json.loads(i.response)
         return Response(serializer.data)
     
-    def post(self, request):
-        serializer = ExerciseResponseSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class ExerciseResponseEdit(APIView):
     def get(self, request):
@@ -95,36 +89,27 @@ class MealResponseEdit(APIView):
         return Response(response)
 
 class CreateResponse(APIView):
-    def get(self, request):
-        sex = ""
-        state = "that of a strongman with very developed muscles"
-        purpose = "maintain my muscle, and lose weight"
-        place = "a gym"
-        body_component = "leg"
-        routine = "every Monday, Wednesday, Friday"
-        time = "a hour"
+    def post(self, request):
+        sex = request.data.get("sex")
+        state = request.data.get("state")# "that of a strongman with very developed muscles"
+        purpose = request.data.get("purpose") #"maintain my muscle, and lose weight"
+        place = request.data.get("place") #"a gym"
+        body_component = request.data.get("body_component") #"leg"
+        routine = request.data.get("routine") #"every Monday, Wednesday, Friday"
+        time = request.data.get("time") #"a hour"
+
+        if request.data.get("que_type") == "workout":
+            message = exercise_prompt(sex, state, purpose, place, body_component, routine, time)
+        elif request.data.get("que_type") == "mealplan":
+            message = meal_prompt(sex, state, purpose, place, body_component, routine, time)
+        else:
+            return Response({"error" : "no request came"}, status=status.HTTP_400_BAD_REQUEST)
         openai.api_key=os.environ.get('OPENAI_API_KEY')
         completion = openai.ChatCompletion.create(
         model="gpt-3.5-turbo",
         messages=[
-            {"role": "user", "content":  
-             f"""I want you to recommend me of workout routine.
-              My sex is {sex}.
-              My current body state is {state}.
-              My purpose of exercising is to {purpose}.
-              I usually exercise in {place}.
-              My mainly concern area on my body while exercising is {body_component}.
-              I exercise {routine}.
-              I usually workout for {time}.
-              Now, make me the workout routine which contains exercise type name, how much repetition and time that I should take for a set, and how much weight that I need to lift.
-              The form of answer should be an JSON.
-              'KEYS FOR JSON': key values for each of items are day of the week, exercise type name, duration, repetition, weight. 
-              'BAD EXAMPLE' : This is an bad example that you have sent to me. 'duration': '3 sets of 10','repetitions': '10'. 
-              'VALUES FOR JSON 1' : You should take care of that the repetitions means the number of reps per a set and total number of set. And also that the duration is meant to be a total expected time for completing this exercise.
-              'VALUES FOR JSON 2' : You should recommend weight formatted as 'percentage% of 1RM'.
-              'VALUES FOR JSON 3' : You should recommend duration of the exercise formatted as 'minute'.
-              and give me the reason why you recommended this routine based on my current state that I mentioned.
-            """}
+            {"role": "user", "content":  message
+             }
           ]
         )
         response = (completion.choices[0].message)

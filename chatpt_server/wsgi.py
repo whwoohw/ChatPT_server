@@ -12,8 +12,5 @@ import os
 from django.core.wsgi import get_wsgi_application
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'chatpt_server.settings')
-cmd_1 = "brew install tesseract"
-cmd_2 = "which tesseract"
-p1 = subprocess.call(cmd_1, shell=True)
-p2 = subprocess.call(cmd_2, shell=True)
+
 application = get_wsgi_application()
