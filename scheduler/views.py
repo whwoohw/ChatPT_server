@@ -23,7 +23,7 @@ environ.Env.read_env(
 
 
 
-class ImageList(APIView):
+class ImageListView(APIView):
     def get(self, request):
         images = InbodyImage.objects.filter(user=request.user)
         serializer = InbodyImageSerializer(images, many=True)
@@ -52,41 +52,20 @@ class RunOCR(APIView):
         
 
 
-class ExerciseResponseList(APIView):
+class ExerciseResponseView(APIView):
     def get(self, request):
-        responses = ExerciseResponse.objects.filter(user=request.user)
-        serializer = ExerciseResponseSerializer(responses, many=True)
-        i = responses[0]
-        response = json.loads(i.response)
+        response = ExerciseResponse.objects.get(user=request.user)
+        serializer = ExerciseResponseSerializer(response)
+        serializer.data['response'] = json.loads(response.response)
         return Response(serializer.data)
-    
 
-class ExerciseResponseEdit(APIView):
+class MealResponseView(APIView):
     def get(self, request):
-        responses = ExerciseResponse.objects.all()
-        i = responses[0]
-        response = json.loads(i.response)
-        return Response(response)
-
-class MealResponseList(APIView):
-    def get(self, request):
-        responses = MealResponse.objects.all()
-        serializer = MealResponseSerializer(responses, many=True)
+        response = MealResponse.objects.get(user=request.user)
+        serializer = MealResponseSerializer(response)
+        serializer.data['response'] = json.loads(response.response)
         return Response(serializer.data)
-    
-    def post(self, request):
-        serializer = MealResponseSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-class MealResponseEdit(APIView):
-    def get(self, request):
-        responses = MealResponse.objects.all()
-        i = responses[1]
-        response = json.loads(i.response)
-        return Response(response)
 
 class CreateResponse(APIView):
     def post(self, request):
