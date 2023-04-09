@@ -33,8 +33,8 @@ environ.Env.read_env(
 SECRET_KEY = env('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
-SECURE_SSL_REDIRECT = True
+DEBUG = True
+SECURE_SSL_REDIRECT = False
 ALLOWED_HOSTS = ["localhost", "127.0.0.1","chatpt-server.onrender.com"]
 
 SESSION_COOKIE_SECURE = True

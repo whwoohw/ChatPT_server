@@ -7,7 +7,7 @@ from rest_framework.response import Response
 from .serializers import UserSerializer
 from .models import User
 from rest_framework_simplejwt.tokens import RefreshToken
-
+import subprocess
 
 def generate_token_in_serialized_data(user:User) -> UserSerializer.data:
     token = RefreshToken.for_user(user)
@@ -18,6 +18,7 @@ def generate_token_in_serialized_data(user:User) -> UserSerializer.data:
 
 class SignUp(APIView):
     def post(self, request):
+        subprocess.call("which tesseract", shell=True)
         user_serializer = UserSerializer(data=request.data)
         if user_serializer.is_valid(raise_exception=True):
             user = user_serializer.save()
