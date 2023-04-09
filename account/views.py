@@ -42,7 +42,7 @@ class Login(APIView):
             return Response({"error": "아이디 또는 비밀번호를 확인해주세요."}, status=status.HTTP_400_BAD_REQUEST)
         serialized_data = generate_token_in_serialized_data(user)
         return Response(serialized_data, status=status.HTTP_200_OK)
-
+# refresh access 둘다 필요
 class Logout(APIView):
     def post(self, request):
         user = get_user_from_token(request=request)
