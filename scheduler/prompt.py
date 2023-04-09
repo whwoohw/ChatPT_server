@@ -7,7 +7,7 @@ def exercise_prompt(sex, state, purpose, place, body_component, routine, time):
     I usually exercise in {place}.
     My mainly concern area on my body while exercising is {body_component}.
     I exercise {routine}.
-    I usually workout for {time}.
+    I usually workout for {time} minutes.
     Now, make me the workout routine which contains exercise type name, how much repetition and time that I should take for a set, and how much weight that I need to lift.
     The form of answer should be an JSON.
     'KEYS FOR JSON 1': keys for each of items are day of the week, exercise type name, duration, repetition, weight. 
