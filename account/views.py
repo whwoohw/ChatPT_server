@@ -37,7 +37,6 @@ class Login(APIView):
             )
         except:
             return Response({"error": "아이디 또는 비밀번호를 확인해주세요."}, status=status.HTTP_400_BAD_REQUEST)
-        user = User.objects.get(user=user)
         serialized_data = generate_token_in_serialized_data(user)
         return Response(serialized_data, status=status.HTTP_200_OK)
 
