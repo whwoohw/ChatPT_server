@@ -7,31 +7,29 @@ from rest_framework.response import Response
 
 from .serializers import InbodyImageSerializer, ExerciseResponseSerializer, MealResponseSerializer
 from .models import InbodyImage, ExerciseResponse, MealResponse, MetaData
-import json
-import openai
-import os
-import pytesseract
+
+import json,string
+import openai, pytesseract
 from PIL import Image
-import environ
+import environ, os
 from chatpt_server.settings import BASE_DIR
+
 from .prompt import exercise_prompt, meal_prompt
-import string
+from account.helpers import get_user_from_token
 
 env = environ.Env()
 environ.Env.read_env(
     env_file=os.path.join(BASE_DIR, '.env')
 )
 
-
-
 class ImageListView(APIView):
     def get(self, request):
-        images = InbodyImage.objects.filter(user=request.user)
+        images = InbodyImage.objects.filter(user=get_user_from_token(request=request))
         serializer = InbodyImageSerializer(images, many=True)
         return Response(serializer.data)
     
     def post(self, request):
-        image = InbodyImage.objects.create(user=request.user, image=request.data.get("image"))
+        image = InbodyImage.objects.create(user=get_user_from_token(request=request), image=request.data.get("image"))
         serializer = InbodyImageSerializer(image)
         image_file = Image.open(image.image)
         inbody_score_image = image_file.crop((720, 235, 800, 280))
@@ -51,26 +49,23 @@ class ImageListView(APIView):
             return Response({"error": f"{e}"}, status=status.HTTP_400_BAD_REQUEST)
         return Response(serializer.data, status=status.HTTP_200_OK)    
 
-        
-
-
 class ExerciseResponseView(APIView):
     def get(self, request):
-        response = ExerciseResponse.objects.get(user=request.user)
+        response = ExerciseResponse.objects.get(user=get_user_from_token(request=request))
         serializer = ExerciseResponseSerializer(response)
         serializer.data['response'] = json.loads(response.response)
         return Response(serializer.data)
 
 class MealResponseView(APIView):
     def get(self, request):
-        response = MealResponse.objects.get(user=request.user)
+        response = MealResponse.objects.get(user=get_user_from_token(request=request))
         serializer = MealResponseSerializer(response)
         serializer.data['response'] = json.loads(response.response)
         return Response(serializer.data)
 
 class CollectMetaData(APIView):
     def post(self, request):
-        image = InbodyImage.objects.get(user=request.user)
+        image = InbodyImage.objects.get(user=get_user_from_token(request=request))
         result = ""
         for c in image.inbody_score:
             if c in string.digits:
@@ -98,7 +93,7 @@ class CollectMetaData(APIView):
         body_component = request.data.get("body_component") #"leg"
         routine = request.data.get("routine") #"every Monday, Wednesday, Friday"
         time = request.data.get("time")#"a hour"
-        MetaData.objects.create(user=request.user,
+        MetaData.objects.create(user=get_user_from_token(request=request),
                                 state=state ,
                                 purpose=purpose ,
                                 place=place ,
@@ -107,11 +102,10 @@ class CollectMetaData(APIView):
                                 time=time )
         return Response(status=status.HTTP_201_CREATED)
 
-
 class CreateResponseView(APIView):
     def post(self, request):
-        metadata = MetaData.objects.get(user=request.user)
-        sex = request.user.sex
+        metadata = MetaData.objects.get(user=get_user_from_token(request=request))
+        sex = get_user_from_token(request=request).sex
         state = metadata.state
         purpose = metadata.purpose
         place = metadata.place
@@ -139,6 +133,3 @@ class CreateResponseView(APIView):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-        
-

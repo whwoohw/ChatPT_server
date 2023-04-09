@@ -9,6 +9,8 @@ from .models import User
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.authentication import JWTAuthentication
 import subprocess
+from .helpers import get_user_from_token
+
 
 def generate_token_in_serialized_data(user:User) -> UserSerializer.data:
     token = RefreshToken.for_user(user)
@@ -43,14 +45,8 @@ class Login(APIView):
 
 class Logout(APIView):
     def post(self, request):
-        try:
-            access_token_authenticator = JWTAuthentication()
-            user, token = access_token_authenticator.authenticate(request=request)
-            # user = request.user
-            if request.user.is_authenticated:
-                RefreshToken(request.data['refresh']).blacklist()
-                return Response(status=status.HTTP_204_NO_CONTENT)
-            return Response({"detail": "로그인 후 다시 시도해주세요."}, status=status.HTTP_401_UNAUTHORIZED)
-        except:
-            return Response({"detail": "user 가 확인되지 않습니다."}, status=status.HTTP_406_NOT_ACCEPTABLE)
-        
+        user = get_user_from_token(request=request)
+        if  user:
+            RefreshToken(request.data['refresh']).blacklist()
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        return Response({"detail": "로그인 후 다시 시도해주세요."}, status=status.HTTP_401_UNAUTHORIZED)
