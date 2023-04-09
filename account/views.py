@@ -7,6 +7,7 @@ from rest_framework.response import Response
 from .serializers import UserSerializer
 from .models import User
 from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.authentication import JWTAuthentication
 import subprocess
 
 def generate_token_in_serialized_data(user:User) -> UserSerializer.data:
@@ -43,7 +44,9 @@ class Login(APIView):
 class Logout(APIView):
     def post(self, request):
         try:
-            user = request.user
+            access_token_authenticator = JWTAuthentication()
+            user, token = access_token_authenticator.authenticate(request=request)
+            # user = request.user
             if request.user.is_authenticated:
                 RefreshToken(request.data['refresh']).blacklist()
                 return Response(status=status.HTTP_204_NO_CONTENT)
